@@ -13,18 +13,19 @@ GLfloat mouse_rotation[2] = {0.0f, 0.0f};
 GLint mouse_initial_position[2] = {0,0};
 
 GLfloat camera_position[3] = {0.f, 0.f, 0.f};
+GLfloat camera_velocity[3] = {0.f, 0.f, 0.f};
 GLfloat camera_angle = 0.f;
 GLfloat camera_angle_velocity = 0.f;
 GLfloat camera_azimut = 0.f;
 GLfloat camera_elevation = 0.f;
-GLfloat camera_velocity[2] = {0.f, 0.f};
-GLfloat camera_velocity_strafe[2] = {0.f, 0.f};
-GLfloat camera_angle_speed[2] = {0.f, 0.f};
+GLfloat camera_velocity_strafe[3] = {0.f, 0.f, 0.f};
 
 int axis_x = 0;
 int axis_y = 0;
 int axis_u = 0;
 int axis_v = 0;
+int axis_r = 0;
+int axis_z = 0;
 
 	static GLint vertices[] =
 			{
@@ -91,6 +92,7 @@ void drawGrid3D (int xmin, int xmax, int ymin, int ymax, int zmin, int zmax)
 
 		glLineWidth (1.0);
 		glPointSize(1.5);
+		glColor3f(1,1,1);
 
 		for(int i=xmin; i<=xmax; i++)
 		{
@@ -119,8 +121,15 @@ void processEvents(sf::Window& App, const float& elapsed_time)
 
 		//dead zones
 		axis_u = Input.GetJoystickAxis(0, sf::Joy::AxisU); if(abs(axis_u) < 15) axis_u = 0;
+		axis_v = Input.GetJoystickAxis(0, sf::Joy::AxisV); if(abs(axis_v) < 15) axis_v = 0;
 		axis_x = Input.GetJoystickAxis(0, sf::Joy::AxisX); if(abs(axis_x) < 15) axis_x = 0;
 		axis_y = Input.GetJoystickAxis(0, sf::Joy::AxisY); if(abs(axis_y) < 15) axis_y = 0;
+		axis_r = Input.GetJoystickAxis(0, sf::Joy::AxisR); if(abs(axis_r) < 15) axis_r = 0;
+		axis_z = Input.GetJoystickAxis(0, sf::Joy::AxisZ); if(abs(axis_z) < 15) axis_z = 0;
+
+		//escala a eje R y Z
+		axis_r = (axis_r + 100) * 0.5f;
+		axis_z = (axis_z + 100) * 0.5f;
 
 		camera_angle_velocity = axis_u * 0.01f * 270;
 
@@ -132,21 +141,25 @@ void processEvents(sf::Window& App, const float& elapsed_time)
 		// v_x = v_x0 +a_xt
 		camera_velocity[0] = axis_y * 0.01f * sin(camera_angle * 3.14159265/180);
 		camera_velocity[1] = axis_y * -0.01f * cos(camera_angle * 3.14159265/180);
+		camera_velocity[2] = axis_y * -0.01f * sin(camera_azimut * 3.14159265/180);
+		//strafe
 		camera_velocity_strafe[0] = axis_x * -0.01f * cos(camera_angle * 3.14159265/180);
 		camera_velocity_strafe[1] = axis_x * -0.01f * sin(camera_angle * 3.14159265/180);
+		camera_velocity_strafe[2] = axis_r * -0.01f - axis_z * -0.01f;
 
 		//calculo posicion
 		//p_x = p_x + v_x * t + 1/2 a_x*t^2
 		camera_position[0] = camera_position[0] + camera_velocity[0] * 5.f * elapsed_time;
 		camera_position[1] = camera_position[1] + camera_velocity[1] * 5.f * elapsed_time;
+		camera_position[2] = camera_position[2] + camera_velocity[2] * 5.f * elapsed_time;
+		//strafe
 		camera_position[0] = camera_position[0] + camera_velocity_strafe[0] * 5.f * elapsed_time;
 		camera_position[1] = camera_position[1] + camera_velocity_strafe[1] * 5.f * elapsed_time;
+		camera_position[2] = camera_position[2] + camera_velocity_strafe[2] * 5.f * elapsed_time;
 
 		std::cout
-			<< "(AxisX, camera_angle) = ("
-			<< axis_x
-			<< ","
-			<< camera_angle
+			<< "(AxisR) = ("
+			<< Input.GetJoystickAxis(0, sf::Joy::AxisR)
 			<< ")"
 			<< std::endl;
 
@@ -215,7 +228,7 @@ int main()
 
 	// Set color and depth clear value
 	//glClearDepth(1.f);
-	glClearColor(0.2f, 0.2f, 0.2f, 0.2f);
+	glClearColor(0.1f, 0.1f, 0.1f, 0.1f);
 
 	//game clock
 	sf::Clock Clock;
@@ -264,7 +277,7 @@ int main()
 		gluPerspective(90.f, 1.f, 0.f, -500.f);
 		glRotatef(camera_azimut, 1.f, 0.f, 0.f);
 		glRotatef(camera_angle, 0.f, 1.f, 0.f);
-		glTranslatef(camera_position[0], camera_elevation, camera_position[1]);
+		glTranslatef(camera_position[0], camera_position[2], camera_position[1]);
 
 		// Finally, display rendered frame on screen
 		App.Display();
