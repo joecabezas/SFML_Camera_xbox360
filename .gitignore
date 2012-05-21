@@ -1,0 +1,8 @@
+#bins
+program
+
+#eclipse related files
+Debug/
+Release
+.cproject
+.project
