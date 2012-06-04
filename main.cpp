@@ -17,7 +17,6 @@ GLfloat camera_velocity[3] = {0.f, 0.f, 0.f};
 GLfloat camera_angle = 0.f;
 GLfloat camera_angle_velocity = 0.f;
 GLfloat camera_azimut = 0.f;
-GLfloat camera_elevation = 0.f;
 GLfloat camera_velocity_strafe[3] = {0.f, 0.f, 0.f};
 
 int axis_x = 0;
@@ -108,7 +107,6 @@ void drawGrid3D (int xmin, int xmax, int ymin, int ymax, int zmin, int zmax)
 			}
 		}
 
-
 	glPopMatrix ();
 }
 
@@ -116,8 +114,6 @@ void processEvents(sf::Window& App, const float& elapsed_time)
 {
 		//process real time inputs
 		const sf::Input& Input = App.GetInput();
-
-		camera_elevation = Input.GetJoystickAxis(0, sf::Joy::AxisR) * 0.01f;
 
 		//dead zones
 		axis_u = Input.GetJoystickAxis(0, sf::Joy::AxisU); if(abs(axis_u) < 15) axis_u = 0;
@@ -134,7 +130,7 @@ void processEvents(sf::Window& App, const float& elapsed_time)
 		camera_angle_velocity = axis_u * 0.01f * 270;
 
 		//calculo velocidad angular
-		camera_azimut = Input.GetJoystickAxis(0, sf::Joy::AxisV) * 0.01f * 90.f;
+		camera_azimut = axis_v * 0.01f * 90.f;
 		camera_angle = camera_angle + camera_angle_velocity * elapsed_time;
 
 		//calculo velocidad
@@ -157,11 +153,11 @@ void processEvents(sf::Window& App, const float& elapsed_time)
 		camera_position[1] = camera_position[1] + camera_velocity_strafe[1] * 5.f * elapsed_time;
 		camera_position[2] = camera_position[2] + camera_velocity_strafe[2] * 5.f * elapsed_time;
 
-		std::cout
-			<< "(AxisR) = ("
-			<< Input.GetJoystickAxis(0, sf::Joy::AxisR)
-			<< ")"
-			<< std::endl;
+		// std::cout
+		// 	<< "(AxisR) = ("
+		// 	<< Input.GetJoystickAxis(0, sf::Joy::AxisR)
+		// 	<< ")"
+		// 	<< std::endl;
 
 		//Process events
 		sf::Event Event;
@@ -224,14 +220,25 @@ void processEvents(sf::Window& App, const float& elapsed_time)
 int main()
 {
 	// Create the main window
-	sf::Window App(sf::VideoMode(1024, 768, 32), "SFML OpenGL");
+	int resX = sf::VideoMode::GetMode(0).Width * 0.7f;
+	int resY = sf::VideoMode::GetMode(0).Height * 0.7f;
+
+	sf::Window App;
+
+	sf::VideoMode video_mode(resX, resY, 32);
+	App.Create(
+		video_mode,
+		"OpenGL xbox cam [Joe]",
+		sf::Style::Titlebar | sf::Style::Close// | sf::Style::Fullscreen
+	);
+	App.SetFramerateLimit(60);
 
 	// Set color and depth clear value
 	//glClearDepth(1.f);
 	glClearColor(0.1f, 0.1f, 0.1f, 0.1f);
 
 	//game clock
-	sf::Clock Clock;
+		sf::Clock Clock;
 
 	// Start game loop
 	while (App.IsOpened())
@@ -274,7 +281,11 @@ int main()
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		//glOrtho(-200, 200, -200, 200, -200, 200);
-		gluPerspective(90.f, 1.f, 0.f, -500.f);
+		gluPerspective(
+			90.f,
+			float(sf::VideoMode::GetMode(0).Width)/float(sf::VideoMode::GetMode(0).Height),
+			0.f, -500.f
+		);
 		glRotatef(camera_azimut, 1.f, 0.f, 0.f);
 		glRotatef(camera_angle, 0.f, 1.f, 0.f);
 		glTranslatef(camera_position[0], camera_position[2], camera_position[1]);
